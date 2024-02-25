@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { togglemenu } from "../utils/appSlice";
+import { addsearch } from "../utils/searchSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
   const [searchquery, setsearchquery] = useState("");
   const [suggestions, setsuggestions] = useState([]);
   const [showsuggestions, setshowsuggestions] = useState(false);
+  const searchCache = useSelector((store) => store.search);
 
   const toggleMenu = () => {
     dispatch(togglemenu());
@@ -14,7 +16,9 @@ const Header = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      getSuggestions();
+      if (searchCache[searchquery]) {
+        setsuggestions(searchCache[searchquery]);
+      } else getSuggestions();
     }, 200);
 
     return () => {
@@ -29,6 +33,7 @@ const Header = () => {
     );
     const json = await data.json();
     setsuggestions(json[1]);
+    dispatch(addsearch({ [searchquery]: suggestions }));
   };
 
   return (
