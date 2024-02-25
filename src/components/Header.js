@@ -1,17 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { togglemenu } from "../utils/appSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
+  const [searchquery, setsearchquery] = useState("");
+  const [suggestions, setsuggestions] = useState([]);
+  const [showsuggestions, setshowsuggestions] = useState(false);
 
   const toggleMenu = () => {
     dispatch(togglemenu());
   };
 
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      getSuggestions();
+    }, 200);
+
+    return () => {
+      clearTimeout(debounce);
+    };
+  }, [searchquery]);
+
+  const getSuggestions = async () => {
+    const data = await fetch(
+      "http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=" +
+        searchquery
+    );
+    const json = await data.json();
+    setsuggestions(json[1]);
+  };
+
   return (
     <div className="p-2 grid grid-flow-col">
-      <div className="flex grid-cols-1">
+      <div className="flex col-span-2">
         <img
           alt="menu"
           className="h-10"
@@ -24,14 +46,35 @@ const Header = () => {
           src="https://www.freeiconspng.com/uploads/hd-youtube-logo-png-transparent-background-20.png"
         ></img>
       </div>
-      <div className="flex grid-cols-10">
-        <input
-          className="border border-black rounded-l-full w-full  px-3"
-          placeholder="Search"
-        ></input>
-        <button className="border border-black rounded-r-full px-3 ">🔍</button>
+      <div className="col-span-8">
+        <div className="flex h-full">
+          <input
+            className="border border-black rounded-l-full w-full  px-3"
+            placeholder="Search"
+            value={searchquery}
+            onChange={(e) => setsearchquery(e.target.value)}
+            onFocus={() => setshowsuggestions(true)}
+            onBlur={() => setshowsuggestions(false)}
+          ></input>
+          <button className="border border-black rounded-r-full px-3 ">
+            🔍
+          </button>
+        </div>
+        <div className="absolute bg-gray-100 w-[48rem] ml-2 px-2 rounded-lg opacity-95">
+          <ul>
+            {showsuggestions &&
+              suggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  className="hover:bg-gray-300 px-2 border-b-2 py-1"
+                >
+                  {suggestion}
+                </li>
+              ))}
+          </ul>
+        </div>
       </div>
-      <div className="grid-cols-1 flex justify-end">
+      <div className="col-span-2 flex justify-end">
         <img
           alt="user"
           className="h-10"
